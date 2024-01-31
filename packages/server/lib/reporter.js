@@ -709,13 +709,26 @@ class Reporter {
         // with the found reporter
         throw err
       }
+      try{
+        p = path.resolve(projectRoot, 'node_modules', reporterName)
 
-      p = path.resolve(projectRoot, 'node_modules', reporterName)
+        // try npm with project root.
+        debug('trying to require local reporter with path:', p)
 
-      // try npm. if this fails, we're out of options, so let it throw
-      debug('trying to require local reporter with path:', p)
-
-      return require(p)
+        return require(p)
+      }
+      catch(err){
+        if (err.code !== 'MODULE_NOT_FOUND') {
+          // bail early if the error wasn't MODULE_NOT_FOUND
+          // because that means theres something actually wrong
+          // with the found reporter
+          throw err
+        }
+        // try a require without any paths added as a final fallback.
+        // this will crawl up the node_modules to find the path which
+        // makes us work with npm workspaces with hoisted dependencies
+        return require(reporterName);
+      }
     }
   }
 
